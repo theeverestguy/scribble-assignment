@@ -8,6 +8,15 @@
 
 **Input**: User description: "Feature: Gameplay Interaction. Prerequisite: Game Start & Drawer Flow complete. Add: 1. Interactive drawing canvas 2. Clear canvas 3. Guess submission 4. Guess validation (trim, reject empty, case-insensitive matching) 5. Guess history 6. Polling synchronization 7. Scoring (correct guess = 100, incorrect = 0). Out of Scope: Results, Restart."
 
+## Clarifications
+
+### Session 2026-06-03
+
+- Q: Canvas state format → A: Array of finalized stroke objects `{points: Array<{x: number, y: number}>}`. Each stroke finalized on mouseup. Single black pen on white. Clear replaces array with `[]`.
+- Q: Guess history structure → A: Flat array `{id, participantId, text, isCorrect, awardedPoints, timestamp}` on room, append-only, chronological, included in every snapshot.
+- Q: Scoring behavior → A: Per-participant `score` (default 0) and `hasScoredThisRound`. First correct guess → +100 and guard set. Subsequent guesses → 0 points. Guard resets when `currentRound` increments.
+- Q: Synchronization strategy → A: Pure HTTP polling. Three new endpoints: `POST /:code/draw` (submit stroke), `POST /:code/clear` (reset strokes), `POST /:code/guess` (submit guess, validate, score). Existing `GET /:code` includes `strokes[]`, `guesses[]`, `participants[].score` in snapshot.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Drawing on the Canvas (Priority: P1)
@@ -83,15 +92,15 @@ Correctly guessing the secret word earns 100 points. Incorrect guesses earn 0 po
 - **FR-009**: System MUST display correct/incorrect status for each guess in the history.
 - **FR-010**: System MUST award 100 points to a guesser for their first correct guess in a round.
 - **FR-011**: System MUST NOT award additional points for subsequent guesses by an already-correct guesser in the same round.
-- **FR-012**: System MUST synchronize canvas strokes, guesses, and scores to all players via HTTP polling.
+- **FR-012**: System MUST synchronize canvas strokes, guesses, and scores to all players via HTTP polling. Three endpoints handle user actions: `POST /:code/draw` (submit finalized stroke), `POST /:code/clear` (reset strokes), `POST /:code/guess` (submit guess with server-side validation and scoring). Existing `GET /:code` returns the full snapshot including strokes, guesses, and scores.
 - **FR-013**: System MUST NOT allow guessers to draw on the canvas (drawing controls are drawer-only).
 
 ### Key Entities
 
-- **CanvasStroke**: A single continuous line drawn by the drawer. Contains an ordered array of points and a timestamp. Stored on the server and broadcast via polling.
-- **Guess**: A text submission from a guesser. Contains the text (trimmed), submitter ID, timestamp, correctness status, and whether points were awarded.
-- **GuessHistory**: An ordered list of all guesses made in the current round, visible to all players.
-- **Score**: A cumulative point total per participant. Initialized to 0 at game start. Updated on correct guesses.
+- **CanvasStroke**: A single finalized line drawn by the drawer. Contains `points: Array<{x: number, y: number}>`. Finalized on mouseup. In-progress strokes are not synced.
+- **Guess**: A text submission from a guesser. Fields: `id`, `participantId`, `text` (trimmed), `isCorrect`, `awardedPoints` (100 or 0), `timestamp`. Appended to an array on the room.
+- **GuessHistory**: The ordered array of all guesses made in the current round, included in every room snapshot for all players.
+- **Score**: A cumulative point total per participant. Each participant has `score: number` (default 0) and a `hasScoredThisRound: boolean` guard. First correct guess in a round adds 100 and sets the guard.
 
 ## Success Criteria *(mandatory)*
 
@@ -108,10 +117,12 @@ Correctly guessing the secret word earns 100 points. Incorrect guesses earn 0 po
 ## Assumptions
 
 - The drawing canvas uses mouse-based freehand input (touch/touchscreen is out of scope for v1).
-- Strokes are represented as arrays of 2D points (x, y) with no styling diversity (single color, single width).
-- Only the most recent canvas state is stored — clearing is irreversible.
+- Strokes use a single black pen on a white background — no color, width, or style options.
+- Canvas strokes are finalized on mouseup and sent to the server only at that point, not during active drawing.
+- Clearing the canvas is irreversible — only the current stroke array is stored.
 - Players can submit unlimited guesses; there is no cooldown or limit on guess frequency.
 - Guesses are visible to all players (drawer included) to allow the drawer to see progress.
-- Once a player guesses correctly, they can continue submitting guesses but earn no additional points.
+- A `hasScoredThisRound` flag on each participant prevents duplicate scoring within a round.
 - Polling interval remains at ~2 seconds (existing baseline from Room Setup & Lobby feature).
+- The existing `GET /:code` endpoint is extended to include `strokes`, `guesses`, and per-participant `score` fields.
 - The scoreboard component from the existing GamePage is reused and extended to display cumulative scores.
