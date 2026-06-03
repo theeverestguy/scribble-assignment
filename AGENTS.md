@@ -44,11 +44,11 @@ You are working on a monolithic repository for a multiplayer drawing game ("Scri
 <!-- SPECKIT START -->
 ## Active Plan
 
-Feature: **Gameplay Interaction** — `003-gameplay-interaction`
+Feature: **Results & Restart** — `004-results-restart`
 
 Implementation plan, data model, API contracts, and quickstart guide:
-- Plan: `specs/003-gameplay-interaction/plan.md`
-- Data Model: `specs/003-gameplay-interaction/data-model.md`
-- API Contracts: `specs/003-gameplay-interaction/contracts/README.md`
-- Quickstart: `specs/003-gameplay-interaction/quickstart.md`
+- Plan: `specs/004-results-restart/plan.md`
+- Data Model: `specs/004-results-restart/data-model.md`
+- API Contracts: `specs/004-results-restart/contracts/README.md`
+- Quickstart: `specs/004-results-restart/quickstart.md`
 <!-- SPECKIT END -->
