@@ -114,7 +114,7 @@ No new interfaces needed — existing `RoomSnapshot` already contains `strokes`,
 
 **`submitGuess()` — Add results transition on correct guess**:
 
-Insert after line 246 (after `rooms.set(...)` and before `return`):
+After `room.guesses.push(guess)` and before `room.updatedAt = now()`:
 ```
 if (isCorrect) {
   room.status = "results";

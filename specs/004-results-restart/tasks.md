@@ -62,6 +62,7 @@ No setup tasks needed — project structure already exists from previous feature
   - AC: When an incorrect guess is submitted, `room.status` remains unchanged
   - AC: Existing scoring and guess recording behavior is preserved
   - AC: All existing tests still pass
+  - AC: Existing `appendStroke()`, `clearCanvas()`, and `submitGuess()` guards check `room.status !== "game"` — they now also reject actions when status is `"results"` (no code change needed)
 
 - [ ] T004 [US1] Update `toRoomSnapshot()` in `backend/src/services/roomStore.ts` to reveal `secretWord` to all players when `room.status === "results"`
   - AC: Change condition from `isViewerDrawer` to `isViewerDrawer || room.status === "results"`
@@ -84,7 +85,7 @@ No setup tasks needed — project structure already exists from previous feature
   - AC: Results view does not interfere with existing lobby redirect logic
   - AC: `viewer` is computed same way as existing code (`participants.find(p => p.id === participantId)`)
 
-**Checkpoint**: At this point, submitting a correct guess transitions to results state. All players see the correct word, winner, scores, and guess history. No restart capability yet.
+**Checkpoint**: At this point, submitting a correct guess transitions to results state. All players see the correct word, winner, scores, and guess history. The restart button is rendered for the host but is non-functional until Phase 4 (US2) is complete.
 
 ---
 
