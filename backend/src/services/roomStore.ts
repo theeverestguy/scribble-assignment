@@ -18,6 +18,7 @@ type StartGameResult = Room | { error: "not-found" | "not-host" | "not-enough-pl
 type LeaveRoomResult = "left" | "room-removed" | "not-found";
 type DrawActionResult = Room | { error: "not-found" | "not-drawer" | "not-game" };
 type GuessSubmitResult = { guess: Guess; correct: boolean; points: number } | { error: "not-found" | "not-guesser" | "empty-guess" | "not-game" };
+type RestartResult = Room | { error: "not-found" | "not-host" | "not-results" };
 
 function now() {
   return new Date().toISOString();
@@ -240,10 +241,49 @@ export function submitGuess(code: string, participantId: string, text: string): 
   };
 
   room.guesses.push(guess);
+
+  if (isCorrect) {
+    room.status = "results";
+  }
+
   room.updatedAt = now();
   rooms.set(room.code, room);
 
   return { guess, correct: isCorrect, points: awardedPoints };
+}
+
+export function restartGame(code: string, participantId: string): RestartResult {
+  const room = rooms.get(code);
+
+  if (!room) {
+    return { error: "not-found" };
+  }
+
+  if (room.status !== "results") {
+    return { error: "not-results" };
+  }
+
+  if (participantId !== room.hostId) {
+    return { error: "not-host" };
+  }
+
+  room.status = "lobby";
+  room.currentRound = undefined;
+  room.drawerId = undefined;
+  room.currentWord = undefined;
+  room.strokes = [];
+  room.guesses = [];
+
+  for (const participant of room.participants) {
+    participant.score = 0;
+    participant.hasScoredThisRound = false;
+    participant.role = undefined;
+  }
+
+  room.updatedAt = now();
+  rooms.set(room.code, room);
+
+  return cloneRoom(room);
 }
 
 export function leaveRoom(code: string, participantId: string): LeaveRoomResult {
@@ -275,7 +315,7 @@ export function toRoomSnapshot(room: Room, viewerParticipantId?: string): RoomSn
     participants: room.participants.map((participant) => ({ ...participant })),
     hostId: room.hostId,
     currentRound: room.currentRound ?? 0,
-    secretWord: isViewerDrawer ? room.currentWord : undefined,
+    secretWord: (isViewerDrawer || room.status === "results") ? room.currentWord : undefined,
     strokes: room.strokes ?? [],
     guesses: room.guesses ?? [],
     availableWords: listWords(),

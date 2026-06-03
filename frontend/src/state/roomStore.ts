@@ -110,6 +110,15 @@ export class RoomStore {
     return response.room;
   }
 
+  async restartGame() {
+    const { room, participantId } = this.state;
+    if (!room || !participantId) {
+      throw new Error("Not in a room");
+    }
+    await api.restartGame(room.code, participantId);
+    await this.fetchRoom();
+  }
+
   async submitDraw(points: Point[]) {
     const { room, participantId } = this.state;
     if (!room || !participantId) throw new Error("Not in a room");

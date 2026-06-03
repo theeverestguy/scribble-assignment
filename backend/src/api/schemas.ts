@@ -34,6 +34,10 @@ export const guessSchema = z.object({
   text: z.string().min(1)
 });
 
+export const restartSchema = z.object({
+  participantId: z.string().uuid()
+});
+
 export class HttpError extends Error {
   statusCode: number;
 

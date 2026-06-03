@@ -4,6 +4,7 @@ import { Canvas } from "../components/Canvas";
 import { Card } from "../components/Card";
 import { GuessForm } from "../components/GuessForm";
 import { ResultPanel } from "../components/ResultPanel";
+import { ResultsView } from "../components/ResultsView";
 import { RoomCodeBadge } from "../components/RoomCodeBadge";
 import { Scoreboard } from "../components/Scoreboard";
 import { useRoomState, useRoomStore } from "../state/roomStore";
@@ -30,6 +31,11 @@ export function GamePage() {
   }
 
   const viewer = room.participants.find((p) => p.id === participantId) ?? null;
+
+  if (room.status === "results") {
+    return <ResultsView room={room} viewer={viewer} onRestart={() => store.restartGame()} />;
+  }
+
   const isDrawer = viewer?.role === "drawer";
   const roundNumber = (room.currentRound ?? 0) + 1;
 

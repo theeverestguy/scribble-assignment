@@ -1,5 +1,5 @@
 export type ParticipantRole = "drawer" | "guesser";
-export type RoomStatus = "lobby" | "game";
+export type RoomStatus = "lobby" | "game" | "results";
 
 export interface Point {
   x: number;
@@ -106,6 +106,13 @@ export const api = {
       body: JSON.stringify({ participantId, text })
     });
   },
+  restartGame(code: string, participantId: string) {
+    return request<{ room: RoomSnapshot }>(`/rooms/${encodeURIComponent(code)}/restart`, {
+      method: "POST",
+      body: JSON.stringify({ participantId })
+    });
+  },
+
   leaveRoom(code: string, participantId: string) {
     return fetch(`${API_BASE_URL}/rooms/${encodeURIComponent(code)}/players/${encodeURIComponent(participantId)}`, {
       method: "DELETE",

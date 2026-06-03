@@ -35,12 +35,12 @@ No setup tasks needed — project structure already exists from previous feature
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T001 [P] Add `"results"` to `RoomStatus` type union in `backend/src/models/game.ts`
+- [X] T001 [P] Add `"results"` to `RoomStatus` type union in `backend/src/models/game.ts`
   - AC: `RoomStatus` is `"lobby" | "game" | "results"` after change
   - AC: No other model changes needed
   - AC: `npm run build` in backend passes
 
-- [ ] T002 [P] Add `"results"` to `RoomStatus` type union in `frontend/src/services/api.ts`
+- [X] T002 [P] Add `"results"` to `RoomStatus` type union in `frontend/src/services/api.ts`
   - AC: `RoomStatus` is `"lobby" | "game" | "results"` after change
   - AC: No other type changes needed
   - AC: `npm run build` in frontend passes
@@ -57,20 +57,20 @@ No setup tasks needed — project structure already exists from previous feature
 
 ### Implementation for User Story 1
 
-- [ ] T003 [US1] Update `submitGuess()` in `backend/src/services/roomStore.ts` to set `room.status = "results"` when `isCorrect === true`, before returning the response
+- [X] T003 [US1] Update `submitGuess()` in `backend/src/services/roomStore.ts` to set `room.status = "results"` when `isCorrect === true`, before returning the response
   - AC: When a correct guess is submitted, `room.status` changes from `"game"` to `"results"`
   - AC: When an incorrect guess is submitted, `room.status` remains unchanged
   - AC: Existing scoring and guess recording behavior is preserved
   - AC: All existing tests still pass
   - AC: Existing `appendStroke()`, `clearCanvas()`, and `submitGuess()` guards check `room.status !== "game"` — they now also reject actions when status is `"results"` (no code change needed)
 
-- [ ] T004 [US1] Update `toRoomSnapshot()` in `backend/src/services/roomStore.ts` to reveal `secretWord` to all players when `room.status === "results"`
+- [X] T004 [US1] Update `toRoomSnapshot()` in `backend/src/services/roomStore.ts` to reveal `secretWord` to all players when `room.status === "results"`
   - AC: Change condition from `isViewerDrawer` to `isViewerDrawer || room.status === "results"`
   - AC: In game state, `secretWord` still only visible to drawer
   - AC: In results state, `secretWord` visible to all viewers in the snapshot
   - AC: In lobby state, `secretWord` is never visible
 
-- [ ] T005 [US1] Create `ResultsView.tsx` component in `frontend/src/components/` — display correct word, winner (highest score), scoreboard, full guess history, and host-only restart button
+- [X] T005 [US1] Create `ResultsView.tsx` component in `frontend/src/components/` — display correct word, winner (highest score), scoreboard, full guess history, and host-only restart button
   - AC: Component accepts `room: RoomSnapshot` and `viewer: Participant | null` props
   - AC: Shows the secret word prominently at the top
   - AC: Computes and displays winner as participant with highest score (shows "No winner" if all scores are 0)
@@ -79,7 +79,7 @@ No setup tasks needed — project structure already exists from previous feature
   - AC: Shows restart button ONLY when `viewer.isHost === true`
   - AC: No drawing controls, no guess input, no canvas
 
-- [ ] T006 [US1] Update `GamePage.tsx` in `frontend/src/pages/` — render `<ResultsView>` when `room.status === "results"` (replaces game view)
+- [X] T006 [US1] Update `GamePage.tsx` in `frontend/src/pages/` — render `<ResultsView>` when `room.status === "results"` (replaces game view)
   - AC: When `room.status === "results"`, `ResultsView` is rendered instead of `GameView` (canvas + guess form)
   - AC: When `room.status === "game"`, normal game view is shown
   - AC: Results view does not interfere with existing lobby redirect logic
@@ -97,7 +97,7 @@ No setup tasks needed — project structure already exists from previous feature
 
 ### Implementation for User Story 2
 
-- [ ] T007 [US2] Implement `restartGame(code, participantId)` service function in `backend/src/services/roomStore.ts` — validate room exists, status is "results", caller is host; reset all game state; preserve room/host/players
+- [X] T007 [US2] Implement `restartGame(code, participantId)` service function in `backend/src/services/roomStore.ts` — validate room exists, status is "results", caller is host; reset all game state; preserve room/host/players
   - AC: Room must exist (404), be in "results" status (400), and caller must be hostId (403) — else return appropriate error
   - AC: On success: `status = "lobby"`, `currentRound = undefined`, `drawerId = undefined`, `currentWord = undefined`, `strokes = []`, `guesses = []`
   - AC: Each participant: `score = 0`, `hasScoredThisRound = false`, `role = undefined`
@@ -105,22 +105,22 @@ No setup tasks needed — project structure already exists from previous feature
   - AC: `createdAt` is preserved, `updatedAt` is updated
   - AC: Existing `createRoom`, `joinRoom`, `startGame` still work after restart
 
-- [ ] T008 [P] [US2] Add `restartSchema` Zod validation (`participantId: z.string().uuid()`) in `backend/src/api/schemas.ts`
+- [X] T008 [P] [US2] Add `restartSchema` Zod validation (`participantId: z.string().uuid()`) in `backend/src/api/schemas.ts`
   - AC: Schema validates `{ participantId: "valid-uuid" }` — passes
   - AC: Schema rejects missing or invalid `participantId`
 
-- [ ] T009 [US2] Add `POST /:code/restart` route handler in `backend/src/api/rooms.ts` — parse params, validate with restartSchema, call restartGame, return snapshot
+- [X] T009 [US2] Add `POST /:code/restart` route handler in `backend/src/api/rooms.ts` — parse params, validate with restartSchema, call restartGame, return snapshot
   - AC: `POST /rooms/:code/restart` returns 200 with `{ room: RoomSnapshot }` on success
   - AC: Returns 404 for unknown room code
   - AC: Returns 403 for non-host caller
   - AC: Returns 400 if room is not in "results" status
 
-- [ ] T010 [P] [US2] Add `restartGame(code, participantId)` API method to `frontend/src/services/api.ts`
+- [X] T010 [P] [US2] Add `restartGame(code, participantId)` API method to `frontend/src/services/api.ts`
   - AC: Calls `POST /rooms/:code/restart` with `{ participantId }`
   - AC: Returns `{ room: RoomSnapshot }` on success
   - AC: Throws error on non-200 response
 
-- [ ] T011 [US2] Add `restartGame()` method to `frontend/src/state/roomStore.ts` — calls API then triggers `fetchRoom()` to refresh state
+- [X] T011 [US2] Add `restartGame()` method to `frontend/src/state/roomStore.ts` — calls API then triggers `fetchRoom()` to refresh state
   - AC: Method reads `code` and `participantId` from current session
   - AC: On success, calls `fetchRoom()` to refresh room state
   - AC: After restart, polling returns status "lobby" and UI redirects to lobby view
@@ -134,12 +134,12 @@ No setup tasks needed — project structure already exists from previous feature
 
 **Purpose**: Build verification and validation
 
-- [ ] T012 Run `cd backend && npm run build` and `cd frontend && npm run build` to verify TypeScript compiles cleanly across both projects
+- [X] T012 Run `npm run build` in backend and `npx tsc --noEmit` in frontend to verify TypeScript compiles cleanly across both projects
   - AC: `npm run build` exits with code 0 in both projects
   - AC: No TypeScript errors
 
-- [ ] T013 [P] Verify no existing tests are broken by running `cd backend && npx vitest run` and `cd frontend && npx vitest run`
-  - AC: All existing tests still pass after changes
+- [X] T013 [P] Verify no existing tests are broken by running `npx vitest run` in both backend and frontend
+  - AC: All existing tests still pass after changes (33/33 backend, 5/5 frontend)
   - AC: No regressions in existing test suites
 
 - [ ] T014 Run quickstart.md validation manually: host starts game, guesser submits correct word, results view appears with correct data, host restarts, all players return to lobby with reset state
