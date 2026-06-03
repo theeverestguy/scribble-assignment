@@ -1,15 +1,18 @@
 export type ParticipantRole = "drawer" | "guesser";
+export type RoomStatus = "lobby" | "game";
 
 export interface Participant {
   id: string;
   name: string;
+  isHost: boolean;
   joinedAt: string;
 }
 
 export interface RoomSnapshot {
   code: string;
-  status: "lobby";
+  status: RoomStatus;
   participants: Participant[];
+  hostId: string;
   availableWords: string[];
   roles: ParticipantRole[];
 }
@@ -57,5 +60,17 @@ export const api = {
   fetchRoom(code: string, participantId?: string) {
     const query = participantId ? `?participantId=${encodeURIComponent(participantId)}` : "";
     return request<{ room: RoomSnapshot }>(`/rooms/${encodeURIComponent(code)}${query}`);
+  },
+  startGame(code: string, participantId: string) {
+    return request<{ room: RoomSnapshot }>(`/rooms/${encodeURIComponent(code)}/start`, {
+      method: "POST",
+      body: JSON.stringify({ participantId })
+    });
+  },
+  leaveRoom(code: string, participantId: string) {
+    return fetch(`${API_BASE_URL}/rooms/${encodeURIComponent(code)}/players/${encodeURIComponent(participantId)}`, {
+      method: "DELETE",
+      keepalive: true
+    });
   }
 };

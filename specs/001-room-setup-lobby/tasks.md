@@ -22,14 +22,14 @@
 
 **⚠️ CRITICAL**: T001 must be complete before any Phase 2–6 backend work begins. T002 can run in parallel with T001 (different directory).
 
-- [ ] T001 Update type definitions — `backend/src/models/game.ts`
+- [x] T001 Update type definitions — `backend/src/models/game.ts`
   - Add `isHost: boolean` to `Participant` interface
   - Add `hostId: string` to `Room` interface
   - Add `"game"` to `RoomStatus` union type (`"lobby" | "game"`)
   - Add `hostId: string` to `RoomSnapshot` interface
   - **AC**: TypeScript compiles with no errors after changes. All four interfaces reflect the additions above. `RoomStatus` accepts `"game"` as a valid value.
 
-- [ ] T002 [P] Mirror type changes in frontend API client — `frontend/src/services/api.ts`
+- [x] T002 [P] Mirror type changes in frontend API client — `frontend/src/services/api.ts`
   - Add `isHost: boolean` to `Participant` interface
   - Add `hostId: string` to `RoomSnapshot` interface
   - Update `RoomSnapshot.status` from `"lobby"` literal to `RoomStatus = "lobby" | "game"` union
@@ -47,24 +47,24 @@
 
 **Depends on**: T001, T002
 
-- [ ] T003 Assign host on room creation and joining — `backend/src/services/roomStore.ts`
+- [x] T003 Assign host on room creation and joining — `backend/src/services/roomStore.ts`
   - In `createRoom`: set `isHost: true` on the creator's `Participant`; set `room.hostId = participant.id`
   - In `joinRoom`: set `isHost: false` on every joining participant
   - Remove the silent `displayName` fallback (the `|| "Player"` default) — validation will guard empty names from Phase 3 onwards; for now keep existing behaviour for `createRoom` and update only the host assignment
   - **AC**: `createRoom("Alice")` returns `result.room.hostId === result.participantId` and `result.room.participants[0].isHost === true`. `joinRoom(code, "Bob")` returns `result.room.participants[1].isHost === false`.
 
-- [ ] T004 Include `hostId` in room snapshot — `backend/src/services/roomStore.ts`
+- [x] T004 Include `hostId` in room snapshot — `backend/src/services/roomStore.ts`
   - In `toRoomSnapshot`: add `hostId: room.hostId` to the returned object
   - **AC**: `GET /rooms/:code` response body contains `"hostId": "<uuid>"`. Each participant in the response includes `"isHost": true/false`. Exactly one participant has `isHost: true`.
 
-- [ ] T005 [P] Add backend unit tests for host assignment — `backend/src/services/roomStore.test.ts`
+- [x] T005 [P] Add backend unit tests for host assignment — `backend/src/services/roomStore.test.ts`
   - Test: `createRoom` returns `participantId` that equals `room.hostId`
   - Test: `createRoom` sets `isHost: true` on the first participant
   - Test: `joinRoom` on an existing room returns a participant with `isHost: false`
   - Test: `toRoomSnapshot` includes `hostId` field
   - **AC**: All new tests pass with `npm test` in `backend/`. No existing tests regress.
 
-- [ ] T006 [US1] Render host badge in lobby player list — `frontend/src/pages/LobbyPage.tsx`
+- [x] T006 [US1] Render host badge in lobby player list — `frontend/src/pages/LobbyPage.tsx`
   - In the participant list `<li>`, add a `(Host)` label (or equivalent visual) next to the participant whose `isHost === true`
   - For the current viewer, additionally show `(You)` to disambiguate their own entry — derive from `participantId === room.hostId`
   - **AC**: Opening the lobby shows the creator's name with a visible "(Host)" indicator. Other players' entries do not show the indicator. When a second player joins and views the lobby, the creator still shows as host.
@@ -81,26 +81,26 @@
 
 **Depends on**: T001 (schemas share Participant type structure)
 
-- [ ] T007 [US2] Enforce strict player name validation in Zod schemas — `backend/src/api/schemas.ts`
+- [x] T007 [US2] Enforce strict player name validation in Zod schemas — `backend/src/api/schemas.ts`
   - Update `createRoomSchema.playerName`: `z.string().trim().min(1, "Player name is required")` (no longer optional)
   - Update `joinRoomSchema.playerName`: same rule as above
   - **AC**: `createRoomSchema.parse({ playerName: "" })` throws. `createRoomSchema.parse({ playerName: "   " })` throws (after trim, length is 0). `createRoomSchema.parse({ playerName: "Alice" })` succeeds. `POST /rooms` with `{}` body returns HTTP 400.
 
-- [ ] T008 [P] [US2] Enforce room code format in Zod schema — `backend/src/api/schemas.ts`
+- [x] T008 [P] [US2] Enforce room code format in Zod schema — `backend/src/api/schemas.ts`
   - Update `roomCodeParamsSchema.code`: `z.string().regex(/^[A-Z0-9]{4,6}$/, "Invalid room code format")`
   - **AC**: `roomCodeParamsSchema.parse({ code: "abcd" })` throws (lowercase). `roomCodeParamsSchema.parse({ code: "AB!1" })` throws (special character). `roomCodeParamsSchema.parse({ code: "ABCD" })` succeeds. `POST /rooms/abcd/join` returns HTTP 400 before any room lookup.
 
-- [ ] T009 [US2] Add duplicate name check in `joinRoom` — `backend/src/services/roomStore.ts`
+- [x] T009 [US2] Add duplicate name check in `joinRoom` — `backend/src/services/roomStore.ts`
   - Before inserting the new participant, check if any existing participant in the room has the same name (case-sensitive exact match)
   - If duplicate found, return `{ error: "name-taken" }` instead of adding the participant
   - **AC**: `joinRoom(code, "Alice")` after "Alice" is already in the room returns `{ error: "name-taken" }`. `joinRoom(code, "alice")` (different case) succeeds (case-sensitive).
 
-- [ ] T010 [US2] Map service errors to correct HTTP responses — `backend/src/api/rooms.ts`
+- [x] T010 [US2] Map service errors to correct HTTP responses — `backend/src/api/rooms.ts`
   - In `POST /:code/join` handler: check result for `{ error: "name-taken" }` and throw `new HttpError(400, "That name is already taken in this room")`
   - Ensure `null` result from `joinRoom` still returns 404 "Unable to join room"
   - **AC**: Joining with a duplicate name returns HTTP 400 with `{ "message": "That name is already taken in this room" }`. Joining with a non-existent code returns HTTP 404. Joining with a malformed code returns HTTP 400 from Zod before reaching `joinRoom`.
 
-- [ ] T011 [P] [US2] Add backend schema unit tests — `backend/src/api/schemas.test.ts`
+- [x] T011 [P] [US2] Add backend schema unit tests — `backend/src/api/schemas.test.ts`
   - Test: `createRoomSchema` rejects empty string
   - Test: `createRoomSchema` rejects whitespace-only string
   - Test: `roomCodeParamsSchema` rejects lowercase code
@@ -109,12 +109,12 @@
   - Test: `roomCodeParamsSchema` accepts valid 4-char uppercase alphanumeric code
   - **AC**: All new tests pass. No existing tests regress.
 
-- [ ] T012 [P] [US2] Add client-side name validation to create room form — `frontend/src/pages/CreateRoomPage.tsx`
+- [x] T012 [P] [US2] Add client-side name validation to create room form — `frontend/src/pages/CreateRoomPage.tsx`
   - Before calling `roomStore.createRoom`, trim the `playerName` value and reject if empty
   - Show inline error: "Player name is required"
   - **AC**: Submitting the form with an empty field shows the error without making a network request. Submitting with only spaces shows the same error. Submitting with a valid name proceeds normally.
 
-- [ ] T013 [US2] Add client-side validation to join room form — `frontend/src/pages/JoinRoomPage.tsx`
+- [x] T013 [US2] Add client-side validation to join room form — `frontend/src/pages/JoinRoomPage.tsx`
   - Before calling `roomStore.joinRoom`, validate: (a) trimmed name is non-empty; (b) room code matches `/^[A-Z0-9]{4,6}$/`
   - Show field-specific inline errors: "Player name is required" / "Invalid room code format"
   - **AC**: Submitting with empty name shows name error, not code error. Submitting with valid name but lowercase code (e.g., "abcd") shows the code format error before any network request. Submitting both invalid fields shows the first failing validation error. Submitting valid inputs proceeds to the lobby.
@@ -131,44 +131,44 @@
 
 **Depends on**: US1 complete (hostId available in state), T001 (RoomStatus has "game")
 
-- [ ] T014 [US3] Add `startGameSchema` — `backend/src/api/schemas.ts`
+- [x] T014 [US3] Add `startGameSchema` — `backend/src/api/schemas.ts`
   - Add `export const startGameSchema = z.object({ participantId: z.string().uuid() })`
   - **AC**: `startGameSchema.parse({ participantId: "not-a-uuid" })` throws. `startGameSchema.parse({ participantId: "<valid-uuid>" })` succeeds.
 
-- [ ] T015 [US3] Implement `startGame` service function — `backend/src/services/roomStore.ts`
+- [x] T015 [US3] Implement `startGame` service function — `backend/src/services/roomStore.ts`
   - Add `export function startGame(code: string, participantId: string)` returning `Room | { error: "not-found" | "not-host" | "not-enough-players" }`
   - Logic: get room (null → `"not-found"`), check `participantId === room.hostId` (false → `"not-host"`), check `room.participants.length >= 2` (false → `"not-enough-players"`), set `room.status = "game"`, call `saveRoom`, return updated room
   - **AC**: Calling `startGame` with valid host and 2 players returns a room with `status: "game"`. Calling with a non-host participant ID returns `{ error: "not-host" }`. Calling with only 1 participant returns `{ error: "not-enough-players" }`. Calling with an unknown code returns `{ error: "not-found" }`.
 
-- [ ] T016 [US3] Add `POST /:code/start` route — `backend/src/api/rooms.ts`
+- [x] T016 [US3] Add `POST /:code/start` route — `backend/src/api/rooms.ts`
   - Parse `roomCodeParamsSchema` (URL param) and `startGameSchema` (body)
   - Call `startGame(code, participantId)`; map errors: `"not-found"` → 404, `"not-host"` → 403, `"not-enough-players"` → 400
   - On success, return 200 with `{ room: toRoomSnapshot(room, participantId) }`
   - **AC**: `POST /rooms/ABCD/start` with the host's `participantId` and 2 players returns 200 with `room.status === "game"`. Non-host participantId returns 403. Single player returns 400. Unknown code returns 404.
 
-- [ ] T017 [P] [US3] Add backend unit tests for `startGame` — `backend/src/services/roomStore.test.ts`
+- [x] T017 [P] [US3] Add backend unit tests for `startGame` — `backend/src/services/roomStore.test.ts`
   - Test: `startGame` with host + 2 players returns room with `status: "game"`
   - Test: `startGame` with non-host participantId returns `{ error: "not-host" }`
   - Test: `startGame` with only 1 player returns `{ error: "not-enough-players" }`
   - Test: `startGame` with unknown room code returns `{ error: "not-found" }`
   - **AC**: All four tests pass. No existing tests regress.
 
-- [ ] T018 [P] [US3] Add `startGame` API method — `frontend/src/services/api.ts`
+- [x] T018 [P] [US3] Add `startGame` API method — `frontend/src/services/api.ts`
   - Add `startGame(code: string, participantId: string): Promise<{ room: RoomSnapshot }>` — `POST /rooms/:code/start` with `{ participantId }` body
   - **AC**: Method exists and is typed correctly. Existing api tests still pass.
 
-- [ ] T019 [US3] Add `startGame` action to `RoomStore` — `frontend/src/state/roomStore.ts`
+- [x] T019 [US3] Add `startGame` action to `RoomStore` — `frontend/src/state/roomStore.ts`
   - Add `async startGame()` method: reads `this.state.room.code` and `this.state.participantId`; calls `api.startGame(code, participantId)` inside `withLoading`; calls `setRoomSnapshot` with the returned room
   - **AC**: Calling `store.startGame()` when host with ≥2 players updates `store.getSnapshot().room.status` to `"game"`. Calling when not host rejects with the server error message surfaced to `store.error`.
 
-- [ ] T020 [US3] Render conditional Start Game button — `frontend/src/pages/LobbyPage.tsx`
+- [x] T020 [US3] Render conditional Start Game button — `frontend/src/pages/LobbyPage.tsx`
   - Replace the always-enabled Start Game button with logic:
     - If current player is NOT host (`participantId !== room.hostId`): render no Start Game button
     - If host but fewer than 2 participants: render disabled button with tooltip/caption "Waiting for more players"
     - If host and ≥2 participants: render enabled button that calls `roomStore.startGame()`
   - **AC**: Non-host player sees no Start Game button. Host with 1 player sees a disabled button. Host with 2 players sees an enabled button. Clicking the enabled button calls the backend (observable via network tab or mock).
 
-- [ ] T021 [US3] Navigate to `/game` when room status changes to `"game"` — `frontend/src/pages/LobbyPage.tsx`
+- [x] T021 [US3] Navigate to `/game` when room status changes to `"game"` — `frontend/src/pages/LobbyPage.tsx`
   - Add/update the existing `useEffect` that watches `room` to also check `room.status === "game"` and call `navigate("/game", { replace: true })` when true
   - **AC**: When the host starts the game, `LobbyPage` for the host immediately navigates to `/game`. Within the next poll cycle (~2s), non-host clients whose lobby is open also navigate to `/game` automatically.
 
@@ -184,18 +184,18 @@
 
 **Depends on**: T002 (frontend types), `roomStore.fetchRoom` (already exists)
 
-- [ ] T022 [US4] Add 2-second polling interval to `RoomStoreProvider` — `frontend/src/state/roomStore.ts`
+- [x] T022 [US4] Add 2-second polling interval to `RoomStoreProvider` — `frontend/src/state/roomStore.ts`
   - In the `RoomStoreProvider` `useEffect`, add `setInterval(() => { store.fetchRoom().catch(() => {}) }, 2000)`
   - Only start the interval when `store.getSnapshot().room !== null`
   - Return a cleanup function that calls `clearInterval` on unmount
   - **AC**: While the lobby is open, `GET /rooms/:code` is called approximately every 2 seconds (observable in browser DevTools Network tab). When the page unmounts (navigate away), the interval is cleared and no further requests are made.
 
-- [ ] T023 [US4] Remove manual refresh button from lobby — `frontend/src/pages/LobbyPage.tsx`
+- [x] T023 [US4] Remove manual refresh button from lobby — `frontend/src/pages/LobbyPage.tsx`
   - Remove `handleRefresh` function, `refreshError` state, and the "Refresh Room" `<button>`
   - Update the Status card text to reflect automatic polling: e.g., "Syncing..." when `isLoading` is true, "Live" otherwise
   - **AC**: The lobby UI no longer contains a "Refresh Room" button. The status card updates between "Syncing..." and "Live" as polling ticks. No console errors appear during normal polling.
 
-- [ ] T024 [P] [US4] Add unit test for polling setup — `frontend/src/state/roomStore.test.ts` (create if not exists)
+- [x] T024 [P] [US4] Add unit test for polling setup — `frontend/src/state/roomStore.test.ts` (create if not exists)
   - Use Vitest fake timers (`vi.useFakeTimers()`)
   - Test: after a room is set in the store and 2000ms elapses, `fetchRoom` (mocked) has been called at least once
   - Test: after the provider unmounts, advancing the timer does NOT trigger additional `fetchRoom` calls
@@ -213,28 +213,28 @@
 
 **Depends on**: T001 (Room type)
 
-- [ ] T025 [US5] Implement `leaveRoom` service function — `backend/src/services/roomStore.ts`
+- [x] T025 [US5] Implement `leaveRoom` service function — `backend/src/services/roomStore.ts`
   - Add `export function leaveRoom(code: string, participantId: string): "left" | "room-removed" | "not-found"`
   - Logic: get room (null → `"not-found"`), filter out the participant, if room now empty delete from Map and return `"room-removed"`, else save and return `"left"`
   - **AC**: `leaveRoom(code, id)` removes the participant from the room. If the room had 1 participant, the room is deleted from the Map and subsequent `getRoom(code)` returns `null`. If the room had 2 participants, the room persists with 1 participant.
 
-- [ ] T026 [US5] Add `DELETE /:code/players/:participantId` route — `backend/src/api/rooms.ts`
+- [x] T026 [US5] Add `DELETE /:code/players/:participantId` route — `backend/src/api/rooms.ts`
   - Parse `roomCodeParamsSchema` for code; parse `participantId` from URL params as non-empty string
   - Call `leaveRoom(code, participantId)`; map `"not-found"` → 404; return 204 No Content on success
   - **AC**: `DELETE /rooms/ABCD/players/<id>` returns 204 when the participant exists. `DELETE /rooms/ABCD/players/<id>` returns 404 when the room does not exist. After all players leave, `GET /rooms/ABCD` returns 404.
 
-- [ ] T027 [P] [US5] Add backend unit tests for `leaveRoom` and room isolation — `backend/src/services/roomStore.test.ts`
+- [x] T027 [P] [US5] Add backend unit tests for `leaveRoom` and room isolation — `backend/src/services/roomStore.test.ts`
   - Test: `leaveRoom` with the last participant deletes the room (`getRoom` returns null)
   - Test: `leaveRoom` with one of multiple participants removes only that participant
   - Test: `leaveRoom` with an unknown room code returns `"not-found"`
   - Test: modifying Room A (via `startGame`) does not change Room B's status
   - **AC**: All four tests pass. No existing tests regress.
 
-- [ ] T028 [P] [US5] Add `leaveRoom` API method — `frontend/src/services/api.ts`
+- [x] T028 [P] [US5] Add `leaveRoom` API method — `frontend/src/services/api.ts`
   - Add `leaveRoom(code: string, participantId: string): Promise<void>` — `DELETE /rooms/:code/players/:participantId`
   - **AC**: Method exists and is typed correctly. Errors are silently swallowed (best-effort cleanup — use `.catch(() => {})` at the call site).
 
-- [ ] T029 [US5] Register `beforeunload` cleanup handler — `frontend/src/state/roomStore.ts`
+- [x] T029 [US5] Register `beforeunload` cleanup handler — `frontend/src/state/roomStore.ts`
   - In `RoomStoreProvider` `useEffect`, add `window.addEventListener("beforeunload", handleUnload)` where `handleUnload` calls `api.leaveRoom` with current room code and participantId if room is active
   - Use `navigator.sendBeacon` or synchronous fetch as fallback for `beforeunload` reliability
   - Remove the event listener on cleanup
