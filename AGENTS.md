@@ -42,6 +42,13 @@ You are working on a monolithic repository for a multiplayer drawing game ("Scri
 -   When creating or editing files, ensure consistency with the existing directory structure detailed above.
 
 <!-- SPECKIT START -->
-For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the current plan
+## Active Plan
+
+Feature: **Game Start & Drawer Flow** — `002-game-start-flow`
+
+Implementation plan, data model, API contracts, and quickstart guide:
+- Plan: `specs/002-game-start-flow/plan.md`
+- Data Model: `specs/002-game-start-flow/data-model.md`
+- API Contracts: `specs/002-game-start-flow/contracts/README.md`
+- Quickstart: `specs/002-game-start-flow/quickstart.md`
 <!-- SPECKIT END -->
