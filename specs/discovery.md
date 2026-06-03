@@ -220,6 +220,20 @@ When a correct guess ends the round, all players see the outcome (correct word, 
 - **Testing**: Vitest (both backend and frontend)
 - **Storage**: In-memory `Map<string, Room>` in roomStore.ts
 
+## Gaps (Known Limitations)
+
+1. **No round timer** — If no guesser submits a correct answer, the round continues indefinitely. The only exit is a correct guess or server restart. A timer or manual "end round" button is needed for production use. Affects: 003, 004.
+
+2. **No drawer rotation** — The host is always the drawer for every game. Players cannot rotate the drawer role between rounds (not that multiple rounds exist). This reduces replay variety. Affects: 002, 004.
+
+3. **No test coverage for new features** — Feature 004 added `restartGame()`, `restartSchema`, `POST /:code/restart`, and `ResultsView.tsx` without corresponding unit or integration tests. Existing tests pass but new code is untested. Affects: 004.
+
+## Assumptions
+
+1. **Single-round sessions** — Each game consists of exactly one round. After results, the host restarts (which clears all state) or players leave. There is no concept of "next round" within a game session. This simplifies the state machine to `lobby → game → results → lobby`.
+
+2. **Trusted frontend for winner display** — The winner is computed client-side by sorting participants by score. There is no server-authoritative `winnerId` field. If the client displays an incorrect winner (e.g., due to a bug), the server has no way to correct it. Acceptable for a prototype.
+
 ## Scaffold Summary (All Features)
 
 ### Files Created
