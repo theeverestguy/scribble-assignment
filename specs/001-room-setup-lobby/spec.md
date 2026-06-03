@@ -39,8 +39,10 @@ When a player attempts to join a room, the system validates both the player's na
 1. **Given** the join form is displayed, **When** a player submits an empty name, **Then** the system rejects the request and displays a clear error message asking for a name.
 2. **Given** the join form is displayed, **When** a player submits a name containing only spaces or whitespace, **Then** the system rejects the request with the same empty-name error.
 3. **Given** the join form is displayed, **When** a player submits an empty room code, **Then** the system rejects the request and prompts the player to enter a room code.
-4. **Given** the join form is displayed, **When** a player submits a room code that does not correspond to any active room, **Then** the system rejects the request and informs the player the room was not found.
-5. **Given** valid name and valid room code are submitted, **When** the player joins, **Then** they are admitted to the lobby immediately.
+4. **Given** the join form is displayed, **When** a player submits a room code that does not match the 4–6 uppercase alphanumeric format (e.g., contains lowercase letters, spaces, or special characters), **Then** the system rejects the request and informs the player the code is invalid before any room lookup occurs.
+5. **Given** the join form is displayed, **When** a player submits a correctly formatted room code that does not correspond to any active room, **Then** the system rejects the request and informs the player the room was not found.
+6. **Given** valid name and valid room code are submitted, **When** the player joins, **Then** they are admitted to the lobby immediately.
+7. **Given** a room already contains a player named "Alex", **When** a second player attempts to join that same room with the name "Alex", **Then** the system rejects the request and informs the second player that the name is already taken in this room.
 
 ---
 
@@ -99,7 +101,7 @@ Actions performed in one room — such as a player joining, the host starting th
 - What happens when the host closes their browser or disconnects before starting the game? (Note: session recovery is out of scope; the room may become unstartable — document this behaviour.)
 - What happens when two players attempt to join the same room at the same moment?
 - What happens when the host attempts to start the game while a polling update is in-flight?
-- What happens if a room code contains unexpected characters (e.g., special characters, mixed case)?
+- Room codes containing non-alphanumeric characters, lowercase letters, or lengths outside 4–6 characters are rejected as malformed (FR-012) and never compared against active rooms.
 
 ## Requirements *(mandatory)*
 
@@ -115,23 +117,34 @@ Actions performed in one room — such as a player joining, the host starting th
 - **FR-008**: System MUST refresh the lobby state automatically at approximately a 2-second interval without requiring manual user action.
 - **FR-009**: System MUST ensure that any state change in one room produces no side effects on any other room.
 - **FR-010**: System MUST propagate a host-initiated game start to all players in that room within the polling interval.
+- **FR-011**: System MUST reject a join request where the player name is already in use by another player currently in the target room, and MUST return a descriptive error indicating the name is taken.
+- **FR-012**: System MUST reject a join request where the room code does not conform to the 4–6 uppercase alphanumeric character format, and MUST return a descriptive error indicating the code is malformed. This check MUST occur before any room existence lookup.
+- **FR-013**: System MUST remove a room from memory once all players in that room have left, freeing its room code for potential reuse.
 
 ### Key Entities
 
-- **Room**: Represents an active game session. Has a unique code, a designated host, a list of current players, and a current phase (lobby or game).
+- **Room**: Represents an active game session. Has a unique code, a designated host, a list of current players, and a current phase (lobby or game). A room is removed from memory when its player list becomes empty.
 - **Player**: A participant in a room. Has a display name, a host flag, and belongs to exactly one room at a time.
-- **RoomCode**: The identifier used to locate and join a specific room. Must be non-empty and correspond to an active room.
+- **RoomCode**: The identifier used to locate and join a specific room. Must be a 4–6 character uppercase alphanumeric string. Codes that do not match this format are rejected as malformed before an existence check is performed.
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: 100% of join attempts with an empty name, whitespace-only name, empty room code, or invalid room code are rejected before the player enters a lobby.
+- **SC-001**: 100% of join attempts with an empty name, whitespace-only name, duplicate name (within the room), empty room code, malformed room code (not 4–6 uppercase alphanumeric characters), or non-existent room code are rejected before the player enters a lobby.
 - **SC-002**: The lobby player list reflects new joins within 3 seconds of a player entering the room, with no manual refresh required.
 - **SC-003**: A non-host player cannot trigger a game start under any circumstance; 0 unauthorised game-start transitions occur.
 - **SC-004**: The host cannot start a game with fewer than 2 players present; 0 single-player game-start transitions occur.
 - **SC-005**: State changes in one room produce 0 observable side effects in any other concurrent room.
 - **SC-006**: All players in a room observe the game-start transition within the 2-second polling interval after the host triggers it.
+
+## Clarifications
+
+### Session 2026-06-03
+
+- Q: Should duplicate player names be permitted within the same room, or must each name in a room be unique? → A: Names must be unique within a room — a join attempt with a name already taken in that room is rejected (FR-011 added).
+- Q: What format do room codes follow, and should structurally malformed codes be rejected separately from "not found" codes? → A: Room codes are 4–6 uppercase alphanumeric characters; malformed codes are rejected before any existence check (FR-012 added; RoomCode entity and edge case updated).
+- Q: What event should trigger a room being removed from memory? → A: Room is removed when all players have left (room becomes empty) — FR-013 added; Room entity and Assumptions updated.
 
 ## Assumptions
 
@@ -140,5 +153,5 @@ Actions performed in one room — such as a player joining, the host starting th
 - A player who closes their browser is treated as disconnected; no reconnection logic is required for this feature.
 - The host role does not transfer if the host leaves; the room may become unstartable in that scenario (out of scope).
 - There is no maximum player limit enforced by this feature; that concern is deferred.
-- Invalid room codes include codes that were once valid but whose rooms have since been removed from memory.
+- A room is removed from memory when all players have left; its code is then treated as non-existent for any subsequent join attempt (FR-005 applies).
 - All polling intervals are approximate and subject to network conditions; exact millisecond precision is not guaranteed.

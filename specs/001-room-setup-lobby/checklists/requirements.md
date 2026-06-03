@@ -33,5 +33,5 @@
 
 - Spec is clean — no clarification markers required; all gaps resolved with documented assumptions.
 - Host-disconnection behaviour is flagged as out of scope in the Assumptions section to prevent ambiguity during planning.
-- Room code format/length is not specified; plan phase should confirm with the team.
+- Room code format confirmed via clarification: 4–6 uppercase alphanumeric characters (FR-012).
 - Ready to proceed to `/speckit-plan`.
