@@ -97,7 +97,7 @@ Correctly guessing the secret word earns 100 points. Incorrect guesses earn 0 po
 
 ### Key Entities
 
-- **CanvasStroke**: A single finalized line drawn by the drawer. Contains `points: Array<{x: number, y: number}>`. Finalized on mouseup. In-progress strokes are not synced.
+- **Stroke**: A single finalized line drawn by the drawer. Contains `points: Array<{x: number, y: number}>`. Finalized on mouseup. In-progress strokes are not synced.
 - **Guess**: A text submission from a guesser. Fields: `id`, `participantId`, `text` (trimmed), `isCorrect`, `awardedPoints` (100 or 0), `timestamp`. Appended to an array on the room.
 - **GuessHistory**: The ordered array of all guesses made in the current round, included in every room snapshot for all players.
 - **Score**: A cumulative point total per participant. Each participant has `score: number` (default 0) and a `hasScoredThisRound: boolean` guard. First correct guess in a round adds 100 and sets the guard.
@@ -117,9 +117,12 @@ Correctly guessing the secret word earns 100 points. Incorrect guesses earn 0 po
 ## Assumptions
 
 - The drawing canvas uses mouse-based freehand input (touch/touchscreen is out of scope for v1).
+- The canvas area is 600×400 CSS pixels (fixed size, not responsive).
 - Strokes use a single black pen on a white background — no color, width, or style options.
 - Canvas strokes are finalized on mouseup and sent to the server only at that point, not during active drawing.
 - Clearing the canvas is irreversible — only the current stroke array is stored.
+- The guess input field is only rendered for guessers; drawers do not see the guess input.
+- Guess history is displayed below the canvas in a scrollable list, visible to all players.
 - Players can submit unlimited guesses; there is no cooldown or limit on guess frequency.
 - Guesses are visible to all players (drawer included) to allow the drawer to see progress.
 - A `hasScoredThisRound` flag on each participant prevents duplicate scoring within a round.
