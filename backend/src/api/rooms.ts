@@ -1,6 +1,9 @@
 import { Router } from "express";
 import {
+  clearSchema,
   createRoomSchema,
+  drawSchema,
+  guessSchema,
   HttpError,
   joinRoomSchema,
   roomCodeParamsSchema,
@@ -8,11 +11,14 @@ import {
   startGameSchema
 } from "./schemas.js";
 import {
+  appendStroke,
+  clearCanvas,
   createRoom,
   getRoom,
   joinRoom,
   leaveRoom,
   startGame,
+  submitGuess,
   toRoomSnapshot
 } from "../services/roomStore.js";
 
@@ -94,6 +100,77 @@ export function createRoomsRouter() {
       response.json({
         room: toRoomSnapshot(result, participantId)
       });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/:code/draw", (request, response, next) => {
+    try {
+      const { code } = roomCodeParamsSchema.parse(request.params);
+      const { participantId, points } = drawSchema.parse(request.body);
+      const result = appendStroke(code, participantId, points);
+
+      if ("error" in result) {
+        switch (result.error) {
+          case "not-found":
+            throw new HttpError(404, "Room not found");
+          case "not-game":
+            throw new HttpError(400, "Game has not started");
+          default:
+            throw new HttpError(403, "Only the drawer can draw");
+        }
+      }
+
+      response.json({ room: toRoomSnapshot(result, participantId) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/:code/clear", (request, response, next) => {
+    try {
+      const { code } = roomCodeParamsSchema.parse(request.params);
+      const { participantId } = clearSchema.parse(request.body);
+      const result = clearCanvas(code, participantId);
+
+      if ("error" in result) {
+        switch (result.error) {
+          case "not-found":
+            throw new HttpError(404, "Room not found");
+          case "not-game":
+            throw new HttpError(400, "Game has not started");
+          default:
+            throw new HttpError(403, "Only the drawer can clear the canvas");
+        }
+      }
+
+      response.json({ room: toRoomSnapshot(result, participantId) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/:code/guess", (request, response, next) => {
+    try {
+      const { code } = roomCodeParamsSchema.parse(request.params);
+      const { participantId, text } = guessSchema.parse(request.body);
+      const result = submitGuess(code, participantId, text);
+
+      if ("error" in result) {
+        switch (result.error) {
+          case "not-found":
+            throw new HttpError(404, "Room not found");
+          case "not-game":
+            throw new HttpError(400, "Game has not started");
+          case "not-guesser":
+            throw new HttpError(403, "Only guessers can submit guesses");
+          default:
+            throw new HttpError(400, "Guess cannot be empty");
+        }
+      }
+
+      response.json(result);
     } catch (error) {
       next(error);
     }

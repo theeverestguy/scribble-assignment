@@ -8,6 +8,9 @@ vi.mock("../services/api", () => ({
     joinRoom: vi.fn(),
     fetchRoom: vi.fn().mockResolvedValue({ room: null }),
     startGame: vi.fn(),
+    submitDraw: vi.fn(),
+    clearCanvas: vi.fn(),
+    submitGuess: vi.fn(),
     leaveRoom: vi.fn()
   }
 }));
@@ -18,6 +21,8 @@ const mockRoom: RoomSnapshot = {
   participants: [],
   hostId: "participant-1",
   currentRound: 0,
+  strokes: [],
+  guesses: [],
   availableWords: [],
   roles: []
 };

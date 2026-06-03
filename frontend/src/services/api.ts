@@ -1,11 +1,27 @@
 export type ParticipantRole = "drawer" | "guesser";
 export type RoomStatus = "lobby" | "game";
 
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface Guess {
+  id: string;
+  participantId: string;
+  text: string;
+  isCorrect: boolean;
+  awardedPoints: number;
+  timestamp: string;
+}
+
 export interface Participant {
   id: string;
   name: string;
   isHost: boolean;
   role?: ParticipantRole;
+  score: number;
+  hasScoredThisRound: boolean;
   joinedAt: string;
 }
 
@@ -16,6 +32,8 @@ export interface RoomSnapshot {
   hostId: string;
   currentRound: number;
   secretWord?: string;
+  strokes: { points: Point[] }[];
+  guesses: Guess[];
   availableWords: string[];
   roles: ParticipantRole[];
 }
@@ -68,6 +86,24 @@ export const api = {
     return request<{ room: RoomSnapshot }>(`/rooms/${encodeURIComponent(code)}/start`, {
       method: "POST",
       body: JSON.stringify({ participantId })
+    });
+  },
+  submitDraw(code: string, participantId: string, points: Point[]) {
+    return request<{ room: RoomSnapshot }>(`/rooms/${encodeURIComponent(code)}/draw`, {
+      method: "POST",
+      body: JSON.stringify({ participantId, points })
+    });
+  },
+  clearCanvas(code: string, participantId: string) {
+    return request<{ room: RoomSnapshot }>(`/rooms/${encodeURIComponent(code)}/clear`, {
+      method: "POST",
+      body: JSON.stringify({ participantId })
+    });
+  },
+  submitGuess(code: string, participantId: string, text: string) {
+    return request<{ guess: Guess; correct: boolean; points: number }>(`/rooms/${encodeURIComponent(code)}/guess`, {
+      method: "POST",
+      body: JSON.stringify({ participantId, text })
     });
   },
   leaveRoom(code: string, participantId: string) {

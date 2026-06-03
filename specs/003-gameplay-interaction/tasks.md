@@ -34,9 +34,9 @@ No setup tasks needed — project structure already exists from previous feature
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T001 [P] Add `Point` and `Guess` interfaces; add `strokes: {points: Point[]}[]` and `guesses: Guess[]` to `Room` and `RoomSnapshot` in `backend/src/models/game.ts`
-- [ ] T002 [P] Add `score: number` (default 0) and `hasScoredThisRound: boolean` (default false) to `Participant` interface in `backend/src/models/game.ts`
-- [ ] T003 [P] Add `Point`, `Guess`, `strokes`, `guesses`, `score`, and `hasScoredThisRound` types/interfaces to `frontend/src/services/api.ts`
+- [x] T001 [P] Add `Point` and `Guess` interfaces; add `strokes: {points: Point[]}[]` and `guesses: Guess[]` to `Room` and `RoomSnapshot` in `backend/src/models/game.ts`
+- [x] T002 [P] Add `score: number` (default 0) and `hasScoredThisRound: boolean` (default false) to `Participant` interface in `backend/src/models/game.ts`
+- [x] T003 [P] Add `Point`, `Guess`, `strokes`, `guesses`, `score`, and `hasScoredThisRound` types/interfaces to `frontend/src/services/api.ts`
 
 **Checkpoint**: Foundation ready — all type definitions in sync between backend and frontend. User story implementation can now begin.
 
@@ -50,13 +50,13 @@ No setup tasks needed — project structure already exists from previous feature
 
 ### Implementation for User Story 1
 
-- [ ] T004 [P] [US1] Add `drawSchema` and `clearSchema` Zod validation schemas in `backend/src/api/schemas.ts`
-- [ ] T005 [P] [US1] Implement `appendStroke(code, participantId, points)` and `clearCanvas(code, participantId)` service functions in `backend/src/services/roomStore.ts` — validate room in "game" status, caller is drawer, append strokes or reset to `[]`
-- [ ] T006 [US1] Update `toRoomSnapshot()` in `backend/src/services/roomStore.ts` to include `strokes: room.strokes ?? []`; add `POST /:code/draw` and `POST /:code/clear` route handlers in `backend/src/api/rooms.ts`
-- [ ] T007 [P] [US1] Add `submitDraw(code, participantId, points)` and `clearCanvas(code, participantId)` API methods to `frontend/src/services/api.ts`
-- [ ] T008 [P] [US1] Add `submitDraw(points)` and `clearCanvas()` methods to `frontend/src/state/roomStore.ts` — each calls the API then triggers `fetchRoom()` to refresh state
-- [ ] T009 [US1] Create `Canvas.tsx` component in `frontend/src/components/` — HTML5 `<canvas>` with mouse event handlers (mousedown starts stroke, mousemove extends it, mouseup finalizes and calls `onDraw`); redraws all strokes from `strokes` prop on change; clear button calls `onClear`; read-only for viewers; black pen, 2px width, round line caps
-- [ ] T010 [US1] Update `GamePage.tsx` in `frontend/src/pages/` — replace the canvas placeholder `<div>` with `<Canvas>` component; pass `strokes`, `isDrawer`, `onDraw`, `onClear` props; wire `onDraw` to `roomStore.submitDraw()` and `onClear` to `roomStore.clearCanvas()`
+- [x] T004 [P] [US1] Add `drawSchema` and `clearSchema` Zod validation schemas in `backend/src/api/schemas.ts`
+- [x] T005 [P] [US1] Implement `appendStroke(code, participantId, points)` and `clearCanvas(code, participantId)` service functions in `backend/src/services/roomStore.ts` — validate room in "game" status, caller is drawer, append strokes or reset to `[]`
+- [x] T006 [US1] Update `toRoomSnapshot()` in `backend/src/services/roomStore.ts` to include `strokes: room.strokes ?? []`; add `POST /:code/draw` and `POST /:code/clear` route handlers in `backend/src/api/rooms.ts`
+- [x] T007 [P] [US1] Add `submitDraw(code, participantId, points)` and `clearCanvas(code, participantId)` API methods to `frontend/src/services/api.ts`
+- [x] T008 [P] [US1] Add `submitDraw(points)` and `clearCanvas()` methods to `frontend/src/state/roomStore.ts` — each calls the API then triggers `fetchRoom()` to refresh state
+- [x] T009 [US1] Create `Canvas.tsx` component in `frontend/src/components/` — HTML5 `<canvas>` with mouse event handlers (mousedown starts stroke, mousemove extends it, mouseup finalizes and calls `onDraw`); redraws all strokes from `strokes` prop on change; clear button calls `onClear`; read-only for viewers; black pen, 2px width, round line caps
+- [x] T010 [US1] Update `GamePage.tsx` in `frontend/src/pages/` — replace the canvas placeholder `<div>` with `<Canvas>` component; pass `strokes`, `isDrawer`, `onDraw`, `onClear` props; wire `onDraw` to `roomStore.submitDraw()` and `onClear` to `roomStore.clearCanvas()`
 
 **Checkpoint**: At this point, the drawer can draw and clear. Guessers see the canvas state update via the next poll cycle. Canvas is the only active feature — no guessing or scoring yet.
 
@@ -70,14 +70,14 @@ No setup tasks needed — project structure already exists from previous feature
 
 ### Implementation for User Story 2
 
-- [ ] T011 [P] [US2] Add `guessSchema` Zod validation schema (`participantId: uuid`, `text: string().min(1)`) in `backend/src/api/schemas.ts`
-- [ ] T012 [P] [US2] Implement pure function `checkGuess(text, secretWord): boolean` in `backend/src/services/roomStore.ts` — trims input, returns case-insensitive match result
-- [ ] T013 [US2] Implement `submitGuess(code, participantId, text)` in `backend/src/services/roomStore.ts` — validate room in "game" status, caller is guesser (not drawer), trim text and reject empty, run `checkGuess` against `room.currentWord`, create `Guess` record, append to `room.guesses`
-- [ ] T014 [US2] Update `toRoomSnapshot()` in `backend/src/services/roomStore.ts` to include `guesses: room.guesses ?? []`; add `POST /:code/guess` route handler in `backend/src/api/rooms.ts` returning `{ guess, correct, points }`
-- [ ] T015 [P] [US2] Add `submitGuess(code, participantId, text)` API method to `frontend/src/services/api.ts`
-- [ ] T016 [P] [US2] Add `submitGuess(text)` method to `frontend/src/state/roomStore.ts` — calls API then triggers `fetchRoom()` (or optimistically appends the guess locally)
-- [ ] T017 [US2] Update `GuessForm.tsx` in `frontend/src/components/` — wire submit handler to `roomStore.submitGuess()`; show inline feedback ("Correct!" / "Incorrect") from API response; clear input on submit
-- [ ] T018 [US2] Add guess history display in `GamePage.tsx` in `frontend/src/pages/` — render `room.guesses` as an ordered list showing each guesser's name, text, correct/incorrect badge, and points awarded
+- [x] T011 [P] [US2] Add `guessSchema` Zod validation schema (`participantId: uuid`, `text: string().min(1)`) in `backend/src/api/schemas.ts`
+- [x] T012 [P] [US2] Implement pure function `checkGuess(text, secretWord): boolean` in `backend/src/services/roomStore.ts` — trims input, returns case-insensitive match result
+- [x] T013 [US2] Implement `submitGuess(code, participantId, text)` in `backend/src/services/roomStore.ts` — validate room in "game" status, caller is guesser (not drawer), trim text and reject empty, run `checkGuess` against `room.currentWord`, create `Guess` record, append to `room.guesses`
+- [x] T014 [US2] Update `toRoomSnapshot()` in `backend/src/services/roomStore.ts` to include `guesses: room.guesses ?? []`; add `POST /:code/guess` route handler in `backend/src/api/rooms.ts` returning `{ guess, correct, points }`
+- [x] T015 [P] [US2] Add `submitGuess(code, participantId, text)` API method to `frontend/src/services/api.ts`
+- [x] T016 [P] [US2] Add `submitGuess(text)` method to `frontend/src/state/roomStore.ts` — calls API then triggers `fetchRoom()` (or optimistically appends the guess locally)
+- [x] T017 [US2] Update `GuessForm.tsx` in `frontend/src/components/` — wire submit handler to `roomStore.submitGuess()`; show inline feedback ("Correct!" / "Incorrect") from API response; clear input on submit
+- [x] T018 [US2] Add guess history display in `GamePage.tsx` in `frontend/src/pages/` — render `room.guesses` as an ordered list showing each guesser's name, text, correct/incorrect badge, and points awarded
 
 **Checkpoint**: At this point, guessers can submit guesses, see validation feedback, and view all guesses in the history. Scoring exists in the backend but isn't displayed yet.
 
@@ -91,8 +91,8 @@ No setup tasks needed — project structure already exists from previous feature
 
 ### Implementation for User Story 3
 
-- [ ] T019 [P] [US3] Add scoring logic inside `submitGuess()` in `backend/src/services/roomStore.ts` — if guess is correct AND `participant.hasScoredThisRound === false`: set `awardedPoints = 100`, `participant.score += 100`, `participant.hasScoredThisRound = true`; reset `hasScoredThisRound` based on `currentRound` tracking
-- [ ] T020 [US3] Update `Scoreboard` component consumption in `GamePage.tsx` in `frontend/src/pages/` — ensure the scoreboard reads `participant.score` from the room snapshot and displays each player's cumulative score; add "100 pts" label next to correct guesses in guess history
+- [x] T019 [P] [US3] Add scoring logic inside `submitGuess()` in `backend/src/services/roomStore.ts` — if guess is correct AND `participant.hasScoredThisRound === false`: set `awardedPoints = 100`, `participant.score += 100`, `participant.hasScoredThisRound = true`; reset `hasScoredThisRound` based on `currentRound` tracking
+- [x] T020 [US3] Update `Scoreboard` component consumption in `GamePage.tsx` in `frontend/src/pages/` — ensure the scoreboard reads `participant.score` from the room snapshot and displays each player's cumulative score; add "100 pts" label next to correct guesses in guess history
 
 **Checkpoint**: At this point, all three user stories are functional. Scoring is displayed and updated correctly.
 
@@ -102,9 +102,9 @@ No setup tasks needed — project structure already exists from previous feature
 
 **Purpose**: Build verification and validation
 
-- [ ] T021 Run `cd backend && npm run build` and `cd frontend && npm run build` to verify TypeScript compiles cleanly across both projects
-- [ ] T022 [P] Verify no existing tests are broken by running `cd backend && npx vitest run` and `cd frontend && npx vitest run`
-- [ ] T023 Run quickstart.md validation manually: host starts game, drawer draws and clears, guesser submits correct and incorrect guesses, scores update, polling syncs everything
+- [x] T021 Run `cd backend && npm run build` and `cd frontend && npm run build` to verify TypeScript compiles cleanly across both projects
+- [x] T022 [P] Verify no existing tests are broken by running `cd backend && npx vitest run` and `cd frontend && npx vitest run`
+- [ ] T023 Run quickstart.md validation manually: host starts game, drawer draws and clears, guesser submits correct and incorrect guesses, scores update, polling syncs everything — **pending manual test**
 
 ---
 

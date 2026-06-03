@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Participant, Room, RoomSnapshot } from "../models/game.js";
+import type { Guess, Participant, Point, Room, RoomSnapshot } from "../models/game.js";
 import { STARTER_ROLES, STARTER_WORDS } from "../seed/starterData.js";
 
 export function selectWord(wordList: readonly string[], round: number): string {
@@ -16,6 +16,8 @@ type JoinRoomSuccess = { participantId: string; room: Room };
 type JoinRoomResult = JoinRoomSuccess | { error: "name-taken" } | null;
 type StartGameResult = Room | { error: "not-found" | "not-host" | "not-enough-players" };
 type LeaveRoomResult = "left" | "room-removed" | "not-found";
+type DrawActionResult = Room | { error: "not-found" | "not-drawer" | "not-game" };
+type GuessSubmitResult = { guess: Guess; correct: boolean; points: number } | { error: "not-found" | "not-guesser" | "empty-guess" | "not-game" };
 
 function now() {
   return new Date().toISOString();
@@ -47,6 +49,8 @@ function createParticipant(name: string, isHost: boolean): Participant {
     id: randomUUID(),
     name,
     isHost,
+    score: 0,
+    hasScoredThisRound: false,
     joinedAt: now()
   };
 }
@@ -66,6 +70,8 @@ export function createRoom(playerName: string) {
     status: "lobby",
     participants: [participant],
     hostId: participant.id,
+    strokes: [],
+    guesses: [],
     createdAt: now(),
     updatedAt: now()
   };
@@ -136,10 +142,108 @@ export function startGame(code: string, participantId: string): StartGameResult 
   room.currentWord = word;
   room.drawerId = room.hostId;
   room.currentRound = 0;
+  room.strokes = [];
+  room.guesses = [];
   room.updatedAt = now();
   rooms.set(room.code, room);
 
   return cloneRoom(room);
+}
+
+export function checkGuess(text: string, secretWord: string): boolean {
+  return text.trim().toLowerCase() === secretWord.toLowerCase();
+}
+
+export function appendStroke(code: string, participantId: string, points: Point[]): DrawActionResult {
+  const room = rooms.get(code);
+
+  if (!room) {
+    return { error: "not-found" };
+  }
+
+  if (room.status !== "game") {
+    return { error: "not-game" };
+  }
+
+  if (participantId !== room.drawerId) {
+    return { error: "not-drawer" };
+  }
+
+  room.strokes.push({ points });
+  room.updatedAt = now();
+  rooms.set(room.code, room);
+
+  return cloneRoom(room);
+}
+
+export function clearCanvas(code: string, participantId: string): DrawActionResult {
+  const room = rooms.get(code);
+
+  if (!room) {
+    return { error: "not-found" };
+  }
+
+  if (room.status !== "game") {
+    return { error: "not-game" };
+  }
+
+  if (participantId !== room.drawerId) {
+    return { error: "not-drawer" };
+  }
+
+  room.strokes = [];
+  room.updatedAt = now();
+  rooms.set(room.code, room);
+
+  return cloneRoom(room);
+}
+
+export function submitGuess(code: string, participantId: string, text: string): GuessSubmitResult {
+  const room = rooms.get(code);
+
+  if (!room) {
+    return { error: "not-found" };
+  }
+
+  if (room.status !== "game") {
+    return { error: "not-game" };
+  }
+
+  const participant = room.participants.find((p) => p.id === participantId);
+
+  if (!participant || participant.role !== "guesser") {
+    return { error: "not-guesser" };
+  }
+
+  const trimmed = text.trim();
+
+  if (trimmed.length === 0) {
+    return { error: "empty-guess" };
+  }
+
+  const isCorrect = checkGuess(trimmed, room.currentWord ?? "");
+  let awardedPoints = 0;
+
+  if (isCorrect && !participant.hasScoredThisRound) {
+    awardedPoints = 100;
+    participant.score += 100;
+    participant.hasScoredThisRound = true;
+  }
+
+  const guess: Guess = {
+    id: randomUUID(),
+    participantId,
+    text: trimmed,
+    isCorrect,
+    awardedPoints,
+    timestamp: now()
+  };
+
+  room.guesses.push(guess);
+  room.updatedAt = now();
+  rooms.set(room.code, room);
+
+  return { guess, correct: isCorrect, points: awardedPoints };
 }
 
 export function leaveRoom(code: string, participantId: string): LeaveRoomResult {
@@ -172,6 +276,8 @@ export function toRoomSnapshot(room: Room, viewerParticipantId?: string): RoomSn
     hostId: room.hostId,
     currentRound: room.currentRound ?? 0,
     secretWord: isViewerDrawer ? room.currentWord : undefined,
+    strokes: room.strokes ?? [],
+    guesses: room.guesses ?? [],
     availableWords: listWords(),
     roles: [...STARTER_ROLES]
   };

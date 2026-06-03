@@ -20,6 +20,20 @@ export const startGameSchema = z.object({
   participantId: z.string().uuid("Invalid participant ID")
 });
 
+export const drawSchema = z.object({
+  participantId: z.string().uuid(),
+  points: z.array(z.object({ x: z.number(), y: z.number() })).min(1)
+});
+
+export const clearSchema = z.object({
+  participantId: z.string().uuid()
+});
+
+export const guessSchema = z.object({
+  participantId: z.string().uuid(),
+  text: z.string().min(1)
+});
+
 export class HttpError extends Error {
   statusCode: number;
 
