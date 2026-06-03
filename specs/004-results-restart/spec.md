@@ -8,6 +8,14 @@
 
 **Input**: User description: "Feature: Results & Restart. \nPrerequisite: Gameplay Interaction complete.\n\nAdd:\n\n1. Round completion\n2. Result state\n3. Display:\n   - correct word\n   - winner\n   - scores\n   - guess history\n4. Restart\n5. Return all players to lobby\n6. Preserve:\n   - room\n   - host\n   - players\n7. Clear:\n   - scores\n   - guesses\n   - drawing\n   - roles\n   - word\n\nOut of Scope:\n- Multiple rounds\n- Rotation"
 
+## Clarifications
+
+### Session 2026-06-03
+
+- Q: Round end trigger → A: Round ends automatically when `submitGuess()` returns `isCorrect: true`. The `submitGuess` service function transitions `room.status` from `"game"` to `"results"` immediately after awarding points for a correct guess. No timer or manual trigger needed.
+- Q: Restart state reset rules → A: Single `restartGame()` service function validates host + "results" status, then sets `status = "lobby"`, resets `currentRound = 0`, clears `drawerId` and `currentWord`, empties `strokes` and `guesses` arrays, and resets each participant's `score = 0`, `hasScoredThisRound = false`, `role = undefined`. Preserves `code`, `hostId`, and `participants` array.
+- Q: Result state structure → A: Room status `"results"` is a new read-only terminal state for the round. The existing `GET /:code` snapshot reveals `secretWord` to ALL players (not just drawer). The frontend replaces `GameView` with `ResultsView` when `status === "results"`. All draw/guess/clear endpoints return 403.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Results Display (Priority: P1)
@@ -63,7 +71,7 @@ From the results view, the host can restart the game. This returns all players t
 
 ### Functional Requirements
 
-- **FR-001**: System MUST transition the room to a "results" status when any guesser submits a correct guess.
+- **FR-001**: System MUST transition the room to "results" status immediately inside `submitGuess()` when a correct guess is detected, before returning the response to the guesser.
 - **FR-002**: System MUST prevent drawing and guessing actions while the room is in "results" status.
 - **FR-003**: System MUST display the correct secret word to all players in the results view.
 - **FR-004**: System MUST identify and display the winner (the player who earned the most points in the round).
@@ -81,9 +89,9 @@ From the results view, the host can restart the game. This returns all players t
 
 ### Key Entities
 
-- **RoomStatus**: The room lifecycle now includes a "results" status between "game" and "lobby". States: `lobby → game → results → lobby → ...`
-- **ResultsView**: The read-only display shown to all players when the round ends. Contains the correct word, winner, scoreboard, and guess history. No interactive controls beyond the host's restart button.
-- **RestartAction**: A host-only action that transitions the room from "results" to "lobby", clearing all round-specific state while preserving room structure.
+- **RoomStatus**: Room lifecycle: `lobby → game → results → lobby → ...`. The "results" status is a read-only terminal state for the completed round.
+- **ResultsView**: Read-only display shown to all players when `room.status === "results"`. Shows the correct word (revealed to all), winner (highest scorer), final scoreboard with cumulative scores, and full chronological guess history. Only interactive element is the host's restart button.
+- **RestartAction**: A host-only action invoked from the results view. Calls `restartGame()` which sets `status = "lobby"`, clears `currentRound`, `drawerId`, `currentWord`, `strokes`, `guesses`, and resets each participant's `score`, `hasScoredThisRound`, and `role`. Preserves `code`, `hostId`, and `participants` array.
 
 ## Success Criteria *(mandatory)*
 
@@ -105,6 +113,6 @@ From the results view, the host can restart the game. This returns all players t
 - The restart action is host-only, consistent with the existing pattern where only the host can start a game.
 - The results view replaces the gameplay view (no in-place overlay) — all players see the same screen.
 - After restart, the new game follows the existing game start flow: host selects a word, a drawer is assigned, and gameplay resumes.
-- The room's `currentRound` counter is reset to 0 on restart (or preserved and incremented — either works as long as `hasScoredThisRound` guards are cleared).
+- The room's `currentRound` counter is reset to 0 on restart.
 - Polling interval remains at ~2 seconds for results and restart state synchronization.
 - Multiple rounds and drawer rotation are explicitly out of scope for this feature.
