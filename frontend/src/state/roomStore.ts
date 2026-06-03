@@ -141,6 +141,7 @@ export class RoomStore {
     return response;
   }
 
+  // Polls GET /rooms/:code every 2 seconds per POL-1 (HTTP polling synchronisation constraint).
   startPolling() {
     if (this.pollingInterval) return;
     this.pollingInterval = setInterval(() => {

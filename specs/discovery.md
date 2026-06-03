@@ -222,17 +222,22 @@ When a correct guess ends the round, all players see the outcome (correct word, 
 
 ## Gaps (Known Limitations)
 
-1. **No round timer** — If no guesser submits a correct answer, the round continues indefinitely. The only exit is a correct guess or server restart. A timer or manual "end round" button is needed for production use. Affects: 003, 004.
+1. **No round timer — stuck `game` state on zero correct guesses**
+   A room in `status: "game"` stays there permanently if no guesser submits a correct answer. The only server-side transition out of `"game"` is `submitGuess()` returning `isCorrect === true`, which sets `room.status = "results"`. There is no server timer, no `POST /:code/end` endpoint, and `restartGame()` actively rejects calls when `room.status !== "results"` — so the host cannot force-exit a stuck round either. The only escape paths are all players leaving (which deletes the room) or a server restart (which clears all in-memory state). A production build would need either a configurable round-duration timer on the server or a host-accessible "end round early" endpoint. **Affects: 003, 004.**
 
-2. **No drawer rotation** — The host is always the drawer for every game. Players cannot rotate the drawer role between rounds (not that multiple rounds exist). This reduces replay variety. Affects: 002, 004.
+2. **No drawer rotation — host is always the drawer on every restart**
+   `startGame()` unconditionally assigns `role: "drawer"` to `room.hostId` and `role: "guesser"` to every other participant on each call. `restartGame()` clears all roles to `undefined` but makes no change to `room.hostId` or any rotation index. There is no `nextDrawerId` field, no round counter that increments beyond zero, and no selection logic that cycles through participants. Every game started in this session has the same drawer. A multi-drawer design would require adding a `drawerIndex` to `Room`, incrementing it in `restartGame()`, and updating `startGame()` to select `participants[drawerIndex % participants.length]`. **Affects: 002, 004.**
 
-3. **No test coverage for new features** — Feature 004 added `restartGame()`, `restartSchema`, `POST /:code/restart`, and `ResultsView.tsx` without corresponding unit or integration tests. Existing tests pass but new code is untested. Affects: 004.
+3. **No automated test coverage for Feature 004 additions**
+   The following code added in Feature 004 has zero unit or integration test coverage: the `restartGame()` service function (including the `status !== "results"` guard and the full state-reset logic), the `POST /:code/restart` route handler, the `submitGuess → status: "results"` status transition, the `ResultsView.tsx` component, and the `restartGame()` action in `frontend/src/state/roomStore.ts`. The existing test files (`roomStore.test.ts`, `schemas.test.ts`) were last updated for Feature 001 and do not cover any Feature 004 code paths. Any regression in the restart or results flow would be silent. **Affects: 004.**
 
 ## Assumptions
 
-1. **Single-round sessions** — Each game consists of exactly one round. After results, the host restarts (which clears all state) or players leave. There is no concept of "next round" within a game session. This simplifies the state machine to `lobby → game → results → lobby`.
+1. **Single-round-per-session data model**
+   The data model, state machine (`lobby → game → results → lobby`), and all service functions are designed for exactly one round of play per restart. `Room.currentRound` is set to `0` at game start and is never incremented — it is reset to `undefined` on restart. `restartGame()` resets participant scores to zero rather than accumulating them across rounds. If this assumption is invalidated (e.g., a "best of 5" format is required), `startGame()` must be replaced with a round-transition function, score accumulation must span restarts, and a match-level concept must be introduced. The state machine and all frontend navigation logic would need corresponding updates.
 
-2. **Trusted frontend for winner display** — The winner is computed client-side by sorting participants by score. There is no server-authoritative `winnerId` field. If the client displays an incorrect winner (e.g., due to a bug), the server has no way to correct it. Acceptable for a prototype.
+2. **Client-side winner derivation — no server-authoritative result**
+   The server does not compute, store, or expose a `winnerId` or `winnerName` field. `RoomSnapshot` exposes `participant.score` for every participant and the full `guesses[]` array. The frontend derives the winner by sorting participants by `score` descending and taking the first element. This means: (a) ties are resolved arbitrarily by sort stability, with no defined tiebreaker; (b) a frontend bug could silently display the wrong winner; and (c) the server has no mechanism to validate or correct what the client displays. This is acceptable for a prototype where all clients share the same deterministic sort, but would require a server-side `winnerId` field for a production deployment where result integrity matters.
 
 ## Scaffold Summary (All Features)
 
