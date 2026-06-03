@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Canvas } from "../components/Canvas";
 import { Card } from "../components/Card";
@@ -15,16 +15,19 @@ export function GamePage() {
   const store = useRoomStore();
   const [guessFeedback, setGuessFeedback] = useState<{ correct: boolean; text: string } | null>(null);
 
+  const navigateHome = useCallback(() => navigate("/", { replace: true }), [navigate]);
+  const navigateLobby = useCallback(() => navigate("/lobby", { replace: true }), [navigate]);
+
   useEffect(() => {
     if (!room) {
-      navigate("/", { replace: true });
+      navigateHome();
       return;
     }
 
     if (room.status === "lobby") {
-      navigate("/lobby", { replace: true });
+      navigateLobby();
     }
-  }, [navigate, room]);
+  }, [navigateHome, navigateLobby, room]);
 
   if (!room || room.status === "lobby") {
     return null;
@@ -32,8 +35,17 @@ export function GamePage() {
 
   const viewer = room.participants.find((p) => p.id === participantId) ?? null;
 
+  async function handleRestart() {
+    try {
+      await store.restartGame();
+      navigateLobby();
+    } catch {
+      navigateLobby();
+    }
+  }
+
   if (room.status === "results") {
-    return <ResultsView room={room} viewer={viewer} onRestart={() => store.restartGame()} />;
+    return <ResultsView room={room} viewer={viewer} onRestart={handleRestart} />;
   }
 
   const isDrawer = viewer?.role === "drawer";
