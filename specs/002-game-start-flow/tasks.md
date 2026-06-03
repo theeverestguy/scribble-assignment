@@ -34,10 +34,10 @@ No setup tasks needed — project structure already exists from previous feature
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T001 [P] Add `role: ParticipantRole` field to `Participant` interface in `backend/src/models/game.ts`
-- [ ] T002 [P] Add `currentWord: string`, `drawerId: string`, `currentRound: number` fields to `Room` interface in `backend/src/models/game.ts`
-- [ ] T003 [P] Add `currentRound: number` and `secretWord?: string` fields to `RoomSnapshot` interface in `backend/src/models/game.ts`
-- [ ] T004 [P] Add `currentRound: number` and `secretWord?: string` fields to `RoomSnapshot` interface in `frontend/src/services/api.ts`
+- [x] T001 [P] Add `role: ParticipantRole` field to `Participant` interface in `backend/src/models/game.ts`
+- [x] T002 [P] Add `currentWord: string`, `drawerId: string`, `currentRound: number` fields to `Room` interface in `backend/src/models/game.ts`
+- [x] T003 [P] Add `currentRound: number` and `secretWord?: string` fields to `RoomSnapshot` interface in `backend/src/models/game.ts`
+- [x] T004 [P] Add `currentRound: number` and `secretWord?: string` fields to `RoomSnapshot` interface in `frontend/src/services/api.ts`
 
 **Checkpoint**: Foundation ready — all type definitions in sync between backend and frontend. User story implementation can now begin.
 
@@ -51,11 +51,11 @@ No setup tasks needed — project structure already exists from previous feature
 
 ### Implementation for User Story 1
 
-- [ ] T005 [P] [US1] Create pure `selectWord(wordList, roundNumber)` function in `backend/src/services/roomStore.ts` (returns `wordList[roundNumber % wordList.length]`)
-- [ ] T006 [P] [US1] Import `STARTER_WORDS` and integrate `selectWord` call into `startGame()` in `backend/src/services/roomStore.ts` (round 0)
-- [ ] T007 [US1] Add role assignment loop in `startGame()` in `backend/src/services/roomStore.ts` — set host participant.role = "drawer", all others = "guesser"
-- [ ] T008 [US1] Add `room.currentWord`, `room.drawerId`, `room.currentRound = 0` assignment in `startGame()` in `backend/src/services/roomStore.ts`
-- [ ] T009 [US1] Add edge case guard in `selectWord()` for empty word list (return empty string rather than crash) in `backend/src/services/roomStore.ts`
+- [x] T005 [P] [US1] Create pure `selectWord(wordList, roundNumber)` function in `backend/src/services/roomStore.ts` (returns `wordList[roundNumber % wordList.length]`)
+- [x] T006 [P] [US1] Import `STARTER_WORDS` and integrate `selectWord` call into `startGame()` in `backend/src/services/roomStore.ts` (round 0)
+- [x] T007 [US1] Add role assignment loop in `startGame()` in `backend/src/services/roomStore.ts` — set host participant.role = "drawer", all others = "guesser"
+- [x] T008 [US1] Add `room.currentWord`, `room.drawerId`, `room.currentRound = 0` assignment in `startGame()` in `backend/src/services/roomStore.ts`
+- [x] T009 [US1] Add edge case guard in `selectWord()` for empty word list (return empty string rather than crash) in `backend/src/services/roomStore.ts`
 
 **Checkpoint**: At this point, `POST /:code/start` returns a room with status "game", participants with roles, currentRound=0, and currentWord selected. The game state is fully initialized on the backend.
 
@@ -69,12 +69,12 @@ No setup tasks needed — project structure already exists from previous feature
 
 ### Implementation for User Story 2
 
-- [ ] T010 [US2] Enhance `toRoomSnapshot()` in `backend/src/services/roomStore.ts` to use `viewerParticipantId` parameter — find viewer's role from room participants; if drawer include `secretWord: room.currentWord`, otherwise omit it
-- [ ] T011 [P] [US2] Update `GET /:code` route in `backend/src/api/rooms.ts` to pass `participantId` query param into `toRoomSnapshot(room, participantId)` (if not already being passed)
-- [ ] T012 [P] [US2] Update `POST /:code/start` route response in `backend/src/api/rooms.ts` to include `participantId` in `toRoomSnapshot(result, participantId)` (if not already being passed)
-- [ ] T013 [US2] Implement role-aware rendering in `frontend/src/pages/GamePage.tsx` — find viewer participant from `room.participants` by `participantId`; if `role === "drawer"` display `room.secretWord` in a prominent card; if `role === "guesser"` hide secret word and show GuessForm
-- [ ] T014 [US2] Add conditionally hidden GuessForm in `frontend/src/pages/GamePage.tsx` — show for guessers (with prompt text), hide for drawer
-- [ ] T015 [US2] Add round display using `room.currentRound` in `frontend/src/pages/GamePage.tsx`
+- [x] T010 [US2] Enhance `toRoomSnapshot()` in `backend/src/services/roomStore.ts` to use `viewerParticipantId` parameter — find viewer's role from room participants; if drawer include `secretWord: room.currentWord`, otherwise omit it
+- [x] T011 [P] [US2] Update `GET /:code` route in `backend/src/api/rooms.ts` to pass `participantId` query param into `toRoomSnapshot(room, participantId)` (if not already being passed)
+- [x] T012 [P] [US2] Update `POST /:code/start` route response in `backend/src/api/rooms.ts` to include `participantId` in `toRoomSnapshot(result, participantId)` (if not already being passed)
+- [x] T013 [US2] Implement role-aware rendering in `frontend/src/pages/GamePage.tsx` — find viewer participant from `room.participants` by `participantId`; if `role === "drawer"` display `room.secretWord` in a prominent card; if `role === "guesser"` hide secret word and show GuessForm
+- [x] T014 [US2] Add conditionally hidden GuessForm in `frontend/src/pages/GamePage.tsx` — show for guessers (with prompt text), hide for drawer
+- [x] T015 [US2] Add round display using `room.currentRound` in `frontend/src/pages/GamePage.tsx`
 
 **Checkpoint**: At this point, the drawer sees the word on their game screen, guessers don't. The secret word is never sent to guessers over the wire.
 
@@ -88,9 +88,9 @@ No setup tasks needed — project structure already exists from previous feature
 
 ### Implementation for User Story 3
 
-- [ ] T016 [US3] Add role badge next to each player name in the player list in `frontend/src/pages/GamePage.tsx` — show "(Drawer)" or "(Guesser)" label for each participant
-- [ ] T017 [US3] Ensure the player info card in `frontend/src/pages/GamePage.tsx` displays the viewer's own role prominently at the top
-- [ ] T018 [US3] Update lobby redirect guard in `frontend/src/pages/GamePage.tsx` — if room status returns to "lobby" during polling, redirect to `/lobby`
+- [x] T016 [US3] Add role badge next to each player name in the player list in `frontend/src/pages/GamePage.tsx` — show "(Drawer)" or "(Guesser)" label for each participant
+- [x] T017 [US3] Ensure the player info card in `frontend/src/pages/GamePage.tsx` displays the viewer's own role prominently at the top
+- [x] T018 [US3] Update lobby redirect guard in `frontend/src/pages/GamePage.tsx` — if room status returns to "lobby" during polling, redirect to `/lobby`
 
 **Checkpoint**: All three user stories independently functional.
 

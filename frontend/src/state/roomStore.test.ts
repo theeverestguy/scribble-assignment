@@ -17,6 +17,7 @@ const mockRoom: RoomSnapshot = {
   status: "lobby",
   participants: [],
   hostId: "participant-1",
+  currentRound: 0,
   availableWords: [],
   roles: []
 };

@@ -2,6 +2,14 @@ import { randomUUID } from "node:crypto";
 import type { Participant, Room, RoomSnapshot } from "../models/game.js";
 import { STARTER_ROLES, STARTER_WORDS } from "../seed/starterData.js";
 
+export function selectWord(wordList: readonly string[], round: number): string {
+  if (wordList.length === 0) {
+    return "";
+  }
+
+  return wordList[round % wordList.length];
+}
+
 const rooms = new Map<string, Room>();
 
 type JoinRoomSuccess = { participantId: string; room: Room };
@@ -118,7 +126,16 @@ export function startGame(code: string, participantId: string): StartGameResult 
     return { error: "not-enough-players" };
   }
 
+  const word = selectWord([...STARTER_WORDS], 0);
+
+  for (const participant of room.participants) {
+    participant.role = participant.isHost ? "drawer" : "guesser";
+  }
+
   room.status = "game";
+  room.currentWord = word;
+  room.drawerId = room.hostId;
+  room.currentRound = 0;
   room.updatedAt = now();
   rooms.set(room.code, room);
 
@@ -145,13 +162,16 @@ export function leaveRoom(code: string, participantId: string): LeaveRoomResult 
 }
 
 export function toRoomSnapshot(room: Room, viewerParticipantId?: string): RoomSnapshot {
-  void viewerParticipantId;
+  const viewer = room.participants.find((p) => p.id === viewerParticipantId);
+  const isViewerDrawer = viewer?.role === "drawer";
 
   return {
     code: room.code,
     status: room.status,
     participants: room.participants.map((participant) => ({ ...participant })),
     hostId: room.hostId,
+    currentRound: room.currentRound ?? 0,
+    secretWord: isViewerDrawer ? room.currentWord : undefined,
     availableWords: listWords(),
     roles: [...STARTER_ROLES]
   };

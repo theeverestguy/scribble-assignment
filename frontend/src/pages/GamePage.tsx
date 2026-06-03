@@ -14,21 +14,28 @@ export function GamePage() {
   useEffect(() => {
     if (!room) {
       navigate("/", { replace: true });
+      return;
+    }
+
+    if (room.status === "lobby") {
+      navigate("/lobby", { replace: true });
     }
   }, [navigate, room]);
 
-  if (!room) {
+  if (!room || room.status === "lobby") {
     return null;
   }
 
   const viewer = room.participants.find((participant) => participant.id === participantId) ?? null;
+  const isDrawer = viewer?.role === "drawer";
+  const roundNumber = (room.currentRound ?? 0) + 1;
 
   return (
     <section className="panel game-page">
       <div className="game-page__header">
         <div className="game-page__header-left">
-          <span className="section-kicker">Round 1</span>
-          <h1 className="game-page__title">Guess the Word!</h1>
+          <span className="section-kicker">Round {roundNumber}</span>
+          <h1 className="game-page__title">{isDrawer ? "Draw the Word!" : "Guess the Word!"}</h1>
         </div>
         <RoomCodeBadge code={room.code} />
       </div>
@@ -40,9 +47,16 @@ export function GamePage() {
         </aside>
 
         <div className="game-page__main">
+          {isDrawer && room.secretWord && (
+            <Card title="Your Secret Word">
+              <div className="secret-word-display" style={{ fontSize: "2rem", textAlign: "center", padding: "1rem", fontWeight: "bold" }}>
+                {room.secretWord}
+              </div>
+            </Card>
+          )}
           <Card title="Canvas">
             <div className="canvas-placeholder" style={{ minHeight: '500px', backgroundColor: '#ffffff', border: '1px solid #e5e7eb' }}>
-              Waiting for drawer...
+              {isDrawer ? "Draw your word here..." : "Waiting for drawer..."}
             </div>
           </Card>
         </div>
@@ -52,7 +66,10 @@ export function GamePage() {
             <dl className="detail-list">
               <div>
                 <dt>Name</dt>
-                <dd>{viewer?.name ?? "Unknown player"}</dd>
+                <dd>
+                  {viewer?.name ?? "Unknown player"}
+                  {viewer && <span className="player-list__badge"> ({viewer.role === "drawer" ? "Drawer" : "Guesser"})</span>}
+                </dd>
               </div>
               <div>
                 <dt>Status</dt>
@@ -61,9 +78,26 @@ export function GamePage() {
             </dl>
           </Card>
 
-          <Card title="Your Guess">
-            <GuessForm />
+          <Card title="Participants">
+            <ul className="player-list">
+              {room.participants.map((participant) => (
+                <li key={participant.id}>
+                  <span>
+                    {participant.name}
+                    {participant.isHost && <span className="player-list__badge"> (Host)</span>}
+                    {participant.role && <span className="player-list__badge"> ({participant.role === "drawer" ? "Drawer" : "Guesser"})</span>}
+                    {participant.id === participantId && <span className="player-list__badge"> (You)</span>}
+                  </span>
+                </li>
+              ))}
+            </ul>
           </Card>
+
+          {!isDrawer && (
+            <Card title="Your Guess">
+              <GuessForm />
+            </Card>
+          )}
         </aside>
       </div>
 
