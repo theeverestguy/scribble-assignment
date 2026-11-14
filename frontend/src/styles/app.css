@@ -110,6 +110,19 @@ input {
   font-size: 0.875rem;
 }
 
+.app-shell__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-shell__logo {
+  display: block;
+  width: clamp(40px, 5vw, 56px);
+  height: auto;
+  flex: none;
+}
+
 .app-shell__title {
   margin: 0;
   color: var(--ink);
