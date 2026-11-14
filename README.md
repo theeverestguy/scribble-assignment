@@ -27,7 +27,7 @@ It already provides:
 
 It does not implement the required room and gameplay features described in the business scenarios below.
 
-The current UI uses Scribble branding, including a drawing-themed logo in the shared header, and presentational copy, but the supported behavior is still the scaffold described in this document.
+The current UI uses Scribble branding, including a drawing-themed logo in the shared header and a soft blue page background, and presentational copy, but the supported behavior is still the scaffold described in this document.
 
 ## Prerequisites
 

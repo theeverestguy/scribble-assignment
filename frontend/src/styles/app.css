@@ -1,6 +1,6 @@
 :root {
   color: #1f2937;
-  background: #f3f4f6; /* slightly darker background to make cards pop */
+  background-color: #eaf2ff; /* soft blue backdrop for the white panels */
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
